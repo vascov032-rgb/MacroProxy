@@ -21,7 +21,6 @@ public class MacroService extends Service {
     private boolean visible = false;
     private boolean isHolding = false;
     private Handler handler = new Handler(Looper.getMainLooper());
-    private float x, y; // Coordenadas onde o botão está na tela
 
     @Override
     public void onCreate() {
@@ -50,11 +49,11 @@ public class MacroService extends Service {
                 PixelFormat.TRANSLUCENT);
         
         params.gravity = Gravity.TOP | Gravity.LEFT;
-        params.x = 200; // Posição inicial
+        params.x = 200;
         params.y = 800;
 
         btn.setOnTouchListener(new View.OnTouchListener() {
-            float initX, initY;
+            int initX, initY; // CORRIGIDO: Agora é int
             float initTouchX, initTouchY;
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -70,8 +69,9 @@ public class MacroService extends Service {
                         }
                         return true;
                     case MotionEvent.ACTION_MOVE:
-                        params.x = initX + (int) (event.getRawX() - initTouchX);
-                        params.y = initY + (int) (event.getRawY() - initTouchY);
+                        // CORRIGIDO: Cast para inteiro em toda a expressão
+                        params.x = (int) (initX + (event.getRawX() - initTouchX));
+                        params.y = (int) (initY + (event.getRawY() - initTouchY));
                         wm.updateViewLayout(btn, params);
                         return true;
                     case MotionEvent.ACTION_UP:
@@ -84,7 +84,6 @@ public class MacroService extends Service {
             }
         });
 
-        // Listener para 4 dedos esconderem/mostrarem
         btn.setOnLongClickListener(v -> {
             visible = !visible;
             btn.setAlpha(visible ? 1f : 0f);
@@ -99,20 +98,22 @@ public class MacroService extends Service {
         public void run() {
             if (isHolding) {
                 triggerKick();
-                handler.postDelayed(this, 50); // Loop rápido
+                handler.postDelayed(this, 50);
             }
         }
     };
 
     private void triggerKick() {
-        // Executa o comando de toque na tela com root
         new Thread(() -> {
             try {
                 Process su = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(su.getOutputStream());
-                // Simula o toque na coordenada central do botão
-                int tapX = (int)(btn.getX() + btn.getWidth() / 2);
-                int tapY = (int)(btn.getY() + btn.getHeight() / 2);
+                // Pega o centro exato do botão na tela para simular o toque
+                int[] location = new int[2];
+                btn.getLocationOnScreen(location);
+                int tapX = location[0] + (btn.getWidth() / 2);
+                int tapY = location[1] + (btn.getHeight() / 2);
+                
                 os.writeBytes("input tap " + tapX + " " + tapY + "\n");
                 os.flush();
             } catch (Exception e) { e.printStackTrace(); }
