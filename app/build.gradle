@@ -1,0 +1,12 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.proxy.macro'
+    compileSdk 33
+    defaultConfig {
+        applicationId "com.proxy.macro"
+        minSdk 26
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+    }
+}
